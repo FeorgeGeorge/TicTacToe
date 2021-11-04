@@ -9,46 +9,40 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
-
-@SuppressWarnings({"unused", "RedundantSuppression"})
+@SuppressWarnings("unused")
 public class TicTacToePage {
     private enum Phase {
-        RUNNING("RUNNING"), DRAW("DRAW"), XWON("WON_X"), OWON("WON_O");
-        private final String name;
-
-        Phase(String name) {
-            this.name = name;
-        }
+        RUNNING, DRAW, WON_X, WON_O
     }
 
-    public class State {
-        public final int size = 3;
-        private int freeCells = size * size;
-        public final int inRowCount = 3;
+    public static class State {
+        private static final int SIZE = 3;
+
+        private int freeCells = SIZE * SIZE;
 
         Phase phase = Phase.RUNNING;
         private boolean crossesMove = true;
-        private String[][] cells;
+        private final String[][] cells;
 
         public State() {
-            cells = new String[size][];
+            cells = new String[SIZE][SIZE];
 
-            for (int x = 0; x < size; x++) {
-                cells[x] = new String[size];
+            for (int x = 0; x < SIZE; x++) {
                 Arrays.fill(cells[x], "");
             }
         }
 
         private boolean checkBoard(String check, UnaryOperator<Integer> getRow, UnaryOperator<Integer> getCol) {
             int count = 0;
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < SIZE; i++) {
                 int row = getRow.apply(i);
                 int column = getCol.apply(i);
-                if (row >= size || column >= size) {
+                if (row >= SIZE || column >= SIZE) {
                     break;
                 }
                 if (check.equals(cells[row][column])) {
                     count += 1;
+                    int inRowCount = 3;
                     if (count == inRowCount) {
                         return true;
                     }
@@ -63,26 +57,26 @@ public class TicTacToePage {
             String check = getTurnCode();
             boolean won = false;
             // checking rows
-            for (int row = 0; row < size; row++) {
+            for (int row = 0; row < SIZE; row++) {
                 int finalRow = row;
                 won = won || checkBoard(check, (x) -> finalRow, (x) -> x);
             }
             // checking columns
-            for (int column = 0; column < size; column++) {
+            for (int column = 0; column < SIZE; column++) {
                 int finalColumn = column;
                 won = won || checkBoard(check, (x) -> x, (x) -> finalColumn);
             }
             // diagnoals
-            for (int offset = 0; offset < size; offset++) {
+            for (int offset = 0; offset < SIZE; offset++) {
                 int finalOffset = offset;
                 won = won || checkBoard(check, (x) -> finalOffset + x, (x) -> x);
             }
             // antidiagonals
-            for (int offset = 0; offset < size; offset++) {
+            for (int offset = 0; offset < SIZE; offset++) {
                 int finalOffset = offset;
-                won = won || checkBoard(check, (x) -> finalOffset + size - 1 - x, (x) -> x);
+                won = won || checkBoard(check, (x) -> finalOffset + SIZE - 1 - x, (x) -> x);
             }
-            return won ? (crossesMove ? Phase.XWON : Phase.OWON) : (freeCells == 0 ? Phase.DRAW : Phase.RUNNING);
+            return won ? (crossesMove ? Phase.WON_X : Phase.WON_O) : (freeCells == 0 ? Phase.DRAW : Phase.RUNNING);
         }
 
         private void updateGameState() {
@@ -98,11 +92,11 @@ public class TicTacToePage {
         }
 
         public String getPhase() {
-            return phase.name;
+            return phase.name();
         }
 
         public int getSize() {
-            return size;
+            return SIZE;
         }
 
         public String[][] getCells() {
@@ -144,7 +138,7 @@ public class TicTacToePage {
         try {
             int row = Integer.parseInt(String.valueOf(cell.charAt(5)));
             int column = Integer.parseInt(String.valueOf(cell.charAt(6)));
-            if (row < 0 || row > state.size || column < 0 || column > state.size) {
+            if (row < 0 || row > State.SIZE || column < 0 || column > State.SIZE) {
                 throw new IndexOutOfBoundsException("Badly formatted cell input");
             }
             boolean x_moves = state.crossesMove;
@@ -162,9 +156,9 @@ public class TicTacToePage {
     }
 
     private void newGame(HttpServletRequest request, Map<String, Object> view) {
-        State start_state = new State();
-        view.put("state", start_state);
-        request.getSession().setAttribute("state", start_state);
+        State startState = new State();
+        view.put("state", startState);
+        request.getSession().setAttribute("state", startState);
         redirect(request);
     }
 
